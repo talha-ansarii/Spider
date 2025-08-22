@@ -1,18 +1,26 @@
+"use client"
 
 import { Button } from "@/components/ui/button";
-import { getQueryClient, trpc } from "@/trpc/server";
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 
+export default  function Page() {
 
-export default async function Page() {
-
-  const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(trpc.hello.queryOptions({text:"talha"}));
+ const trpc = useTRPC();
+ const invoke = useMutation(trpc.invoke.mutationOptions({
+  onSuccess: () => {
+    toast.success("Background job invoked successfully!");
+  }
+}));
 
   return (
     <div className="text-gray-900">
-      <Button variant={"destructive"}>
-      
+      <Button 
+      onClick={() => invoke.mutate({ text: "talha" })}
+      variant={"outline"}>
+      Invoke bg job
       </Button>
     </div>
   );
