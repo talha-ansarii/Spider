@@ -16,7 +16,8 @@ export const messagesRouter = createTRPCRouter({
 
    create :  baseProcedure
    .input(z.object({
-      value : z.string().min(1,{message: "Message is required"})
+      value : z.string().min(1,{message: "Message is required"}),
+      projectId : z.string()
    }))
    .mutation(async ({input}) => {
       const { value } = input;
@@ -24,13 +25,15 @@ export const messagesRouter = createTRPCRouter({
          data: {
             content: value,
             role: "USER",
-            type: "RESULT"
+            type: "RESULT",
+            projectId: input.projectId
          }
       });
     await inngest.send({
       name: "coder/run",
       data: {
         input: value,
+        projectId: input.projectId
       },
     });
     return newMessage;
