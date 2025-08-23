@@ -1,12 +1,17 @@
 import { z }from "zod";
 import { inngest } from "./client";
 
-import { createAgent, createNetwork, createTool, gemini } from "@inngest/agent-kit";
+import { createAgent, createNetwork, createTool, gemini, Tool } from "@inngest/agent-kit";
 import {Sandbox} from "@e2b/code-interpreter"
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
 
+
+interface AgentState {
+  summary: string;
+  files: {[path:string]: string}
+}
 
 export const coder = inngest.createFunction(
   { id: "coder" },
@@ -19,7 +24,7 @@ export const coder = inngest.createFunction(
       return sandbox.sandboxId;
     });
 
-    const codeAgent = createAgent({
+    const codeAgent = createAgent<AgentState>({
       name: "code-agent",
       description: "An expert in code generation and manipulation.",
       system: PROMPT,
@@ -67,7 +72,7 @@ export const coder = inngest.createFunction(
               })
             ),
           }),
-          handler: async ({ files }, { step, network }) => {
+          handler: async ({ files }, { step, network } : Tool.Options<AgentState>) => {
             return await step?.run("createOrUpdateFiles", async () => {
               try {
                 const updatedFiles = network.state.data.files || {};
@@ -130,7 +135,7 @@ export const coder = inngest.createFunction(
       },
     });
 
-    const network = createNetwork({
+    const network = createNetwork<AgentState>({
       name :  "coding-agent-network",
       agents : [codeAgent],
       maxIter : 5,
@@ -145,6 +150,8 @@ export const coder = inngest.createFunction(
 
     const result = await network.run(event.data.input);
 
+    const isError = !result.state.data.summary || Object.keys(result.state.data.files || {}).length === 0;
+
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
       const host = sandbox.getHost(3000);
@@ -152,6 +159,16 @@ export const coder = inngest.createFunction(
     });
 
     await step.run("save-result", async() => {
+
+      if(isError){
+        return await prisma.message.create({
+          data: {
+            content: "Error occurred while processing request. Please try again",
+            role: "ASSISTANT",
+            type: "ERROR"
+          }
+        });
+      }
       await prisma.message.create({
         data: {
           content: result.state.data.summary,
