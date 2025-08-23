@@ -5,9 +5,12 @@ import { createAgent, createNetwork, createTool, gemini } from "@inngest/agent-k
 import {Sandbox} from "@e2b/code-interpreter"
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { PROMPT } from "@/prompt";
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
+import { prisma } from "@/lib/db";
+
+
+export const coder = inngest.createFunction(
+  { id: "coder" },
+  { event: "coder/run" },
   async ({ event, step }) => {
 
     console.log(event.data.input);
@@ -147,6 +150,23 @@ export const helloWorld = inngest.createFunction(
       const host = sandbox.getHost(3000);
       return `https://${host}`;
     });
+
+    await step.run("save-result", async() => {
+      await prisma.message.create({
+        data: {
+          content: result.state.data.summary,
+          role: "ASSISTANT",
+          type: "RESULT",
+          fragment :{
+            create : {
+              sandboxUrl : sandboxUrl,
+              title: "Fragment",
+              files : result.state.data.files,
+            }
+          }
+        }
+      });
+    })
 
     console.log("SANDBOX URL", sandboxUrl);
     return { 
