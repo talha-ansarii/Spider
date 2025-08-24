@@ -19,6 +19,7 @@ import { prisma } from "@/lib/db";
 interface AgentState {
   summary: string;
   files: { [path: string]: string };
+  filePaths: string[];
 }
 
 export const coder = inngest.createFunction(
@@ -32,12 +33,44 @@ export const coder = inngest.createFunction(
       await sandbox.setTimeout(60_000 * 10 * 3);
       return sandbox.sandboxId;
     });
+    
+
+    await step.run("save-previous-files-to-sandbox", async () => {
+      const latestMessage = await prisma.message.findFirst({
+        where: {
+          AND: [{ projectId: event.data.projectId }, { role: "ASSISTANT" }],
+        },
+        orderBy: {
+          createdAt: "desc", // latest first
+        },
+        include: {
+          fragment: true, // include files Json
+        },
+      });
+
+      const files = latestMessage?.fragment?.files as
+        | { [path: string]: string }
+        | undefined;
+      console.log("length ", files ? Object.keys(files).length : 0);
+
+      if (files) {
+        for (const [path, content] of Object.entries(files)) {
+          console.log(`Pre-writing file into sandbox: ${path}`);
+          const sandbox = await getSandbox(sandboxId);
+          await sandbox.files.write(path, content);
+        }
+      }
+    })
+
 
     const previousMessagesAndFiles = await step.run(
       "get-previous-messages",
       async () => {
         const formattedMessages: Message[] = [];
-        const formattedFilesPath: { [path: string]: string } = {};
+
+
+
+
         const messages = await prisma.message.findMany({
           where: {
             projectId: event.data.projectId,
@@ -49,6 +82,8 @@ export const coder = inngest.createFunction(
             createdAt: "asc",
           },
         });
+        //extracting file paths only
+          const paths: string[] = [];
 
         for (const i in messages) {
           const message = messages[i];
@@ -58,24 +93,24 @@ export const coder = inngest.createFunction(
             content: `${i + 1}. ${message.content}`,
           });
 
-          //extracting file paths only
+          
           for (const path of Object.keys(message.fragment?.files || {})) {
-            formattedFilesPath[path] =
-              "Call get-file-content-using-path-from-database tool to see the content of the required file";
+              paths.push(path);
           }
         }
 
-        return { messages: formattedMessages, files: formattedFilesPath };
+        return { messages: formattedMessages, filePaths: paths };
       }
     );
 
-    console.log("PREVIOUS FILES", previousMessagesAndFiles.files);
+    console.log("PREVIOUS FILES", previousMessagesAndFiles.filePaths);
     // console.log("PREVIOUS MESSAGES", previousMessagesAndFiles.messages);
 
     const state = createState<AgentState>(
       {
         summary: "",
-        files: previousMessagesAndFiles.files,
+        files: {},
+        filePaths: previousMessagesAndFiles.filePaths,
       },
       {
         messages: previousMessagesAndFiles.messages,
