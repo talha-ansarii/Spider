@@ -18,11 +18,17 @@ export default  function Page() {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
 
- const [value, setValue] = useState(localStorage.getItem("value") || "");
+ // Initialize without touching localStorage during SSR; hydrate on mount
+ const [value, setValue] = useState("");
  const [mounted, setMounted] = useState(false);
 
  useEffect(() => {
    setMounted(true);
+   // Safely read any persisted value after mount
+   try {
+     const persisted = typeof window !== "undefined" ? localStorage.getItem("value") : null;
+     if (persisted) setValue(persisted);
+   } catch {}
  }, []);
 
 
@@ -41,12 +47,16 @@ export default  function Page() {
 
 
   useEffect(() => {
-    const value = localStorage.getItem("value");
-    localStorage.removeItem("value");
-    if (value) {
-      createProject.mutate({ value });
-    }
-  }, [createProject]);
+    // Only run on client after mount
+    if (!mounted) return;
+    try {
+      const val = typeof window !== "undefined" ? localStorage.getItem("value") : null;
+      if (val) {
+        localStorage.removeItem("value");
+        createProject.mutate({ value: val });
+      }
+    } catch {}
+  }, [createProject, mounted]);
 
   // Quick-start suggestions
   const suggestions = [

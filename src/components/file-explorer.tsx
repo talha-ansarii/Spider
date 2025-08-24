@@ -108,7 +108,7 @@ export const FileExplorer = ({ files }: FileExplorerProps) => {
       filePath : string
    ) => {
       setSelectedFile(filePath);
-   }, [files]);
+   }, []);
 
    return (
      <ResizablePanelGroup direction="horizontal">
