@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { signIn } from "next-auth/react";
 
 
 export default  function Page() {
@@ -16,6 +17,11 @@ export default  function Page() {
   const { resolvedTheme, setTheme } = useTheme();
 
  const [value, setValue] = useState("");
+ const [mounted, setMounted] = useState(false);
+
+ useEffect(() => {
+   setMounted(true);
+ }, []);
 
  const trpc = useTRPC();
 
@@ -53,8 +59,8 @@ export default  function Page() {
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           className="rounded-full border"
         >
-          <span className="text-lg" aria-hidden>
-            {resolvedTheme === "dark" ? "🌞" : "🌙"}
+          <span className="text-lg" aria-hidden suppressHydrationWarning>
+            {mounted ? (resolvedTheme === "dark" ? "🌞" : "🌙") : "🕷️"}
           </span>
         </Button>
       </div>
@@ -75,8 +81,8 @@ export default  function Page() {
               Weave a beautiful website instantly
             </h1>
             <p className="mt-4 text-pretty text-base text-foreground/70 sm:text-lg">
-              Describe what you want and let Spider spin it into a production-ready site.
-              Cute in light. Lethal in dark.
+              Describe what you want and let Spider spin it into a
+              production-ready site. Cute in light. Lethal in dark.
             </p>
 
             <form onSubmit={onSubmit} className="mt-10">
@@ -98,10 +104,12 @@ export default  function Page() {
             </form>
 
             <div className="mt-6 text-xs text-foreground/60">
-              By continuing you agree to an automated project setup. You can refine later.
+              By continuing you agree to an automated project setup. You can
+              refine later.
             </div>
-          </div>
 
+            <button onClick={() => signIn()}>Sign In</button>
+          </div>
         </div>
       </section>
 
