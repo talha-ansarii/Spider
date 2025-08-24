@@ -1,66 +1,73 @@
-import { z }from "zod";
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { z } from "zod";
 import { inngest } from "./client";
 
-import { createAgent, createNetwork, createTool, openai, type Tool, type Message, createState } from "@inngest/agent-kit";
-import {Sandbox} from "@e2b/code-interpreter"
+import {
+  createAgent,
+  createNetwork,
+  createTool,
+  openai,
+  type Tool,
+  type Message,
+  createState,
+} from "@inngest/agent-kit";
+import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
 
-
 interface AgentState {
   summary: string;
-  files: {[path:string]: string};
+  files: { [path: string]: string };
 }
 
 export const coder = inngest.createFunction(
   { id: "coder" },
   { event: "coder/run" },
   async ({ event, step }) => {
-
     console.log(event.data.input);
-    
 
-    
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("spider-test-2");
       await sandbox.setTimeout(60_000 * 10 * 3);
       return sandbox.sandboxId;
     });
 
-    const previousMessagesAndFiles = await step.run("get-previous-messages", async () => {
-
-      const formattedMessages: Message[] = [];
-      const formattedFilesPath: {[path:string]: string} = {};
-      const messages = await prisma.message.findMany({
-        where: {
-          projectId: event.data.projectId,
-        },
-        include:{
-          fragment: true
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        take: 5, // get last 5 messages
-      });
-
-      for (const i in messages) {
-        const message = messages[i];
-        formattedMessages.push({
-          type: "text",
-          role: message.role === "ASSISTANT" ? "assistant" : "user",
-          content: message.content,
+    const previousMessagesAndFiles = await step.run(
+      "get-previous-messages",
+      async () => {
+        const formattedMessages: Message[] = [];
+        const formattedFilesPath: { [path: string]: string } = {};
+        const messages = await prisma.message.findMany({
+          where: {
+            projectId: event.data.projectId,
+          },
+          include: {
+            fragment: true,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
         });
 
-        //extracting file paths only
-        for (const path of Object.keys(message.fragment?.files || {})) {
-          formattedFilesPath[path] = "content is hidden for context saving";
-        }
-      }
+        for (const i in messages) {
+          const message = messages[i];
+          formattedMessages.push({
+            type: "text",
+            role: message.role === "ASSISTANT" ? "assistant" : "user",
+            content: `${i + 1}. ${message.content}`,
+          });
 
-      return { messages: formattedMessages.reverse(), files: formattedFilesPath };
-    });
+          //extracting file paths only
+          for (const path of Object.keys(message.fragment?.files || {})) {
+            formattedFilesPath[path] =
+              "Call get-file-content-using-path-from-database tool to see the content of the required file";
+          }
+        }
+
+        return { messages: formattedMessages, files: formattedFilesPath };
+      }
+    );
 
     console.log("PREVIOUS FILES", previousMessagesAndFiles.files);
     // console.log("PREVIOUS MESSAGES", previousMessagesAndFiles.messages);
@@ -68,7 +75,7 @@ export const coder = inngest.createFunction(
     const state = createState<AgentState>(
       {
         summary: "",
-        files: previousMessagesAndFiles.files
+        files: previousMessagesAndFiles.files,
       },
       {
         messages: previousMessagesAndFiles.messages,
@@ -176,8 +183,6 @@ export const coder = inngest.createFunction(
                   fileContents.push({ path: file, content });
                 }
 
-                
-
                 return JSON.stringify(fileContents);
               } catch (e) {
                 console.error(`Error occurred while reading files: ${e}`);
@@ -188,19 +193,21 @@ export const coder = inngest.createFunction(
         }),
         createTool({
           name: "get-file-content-using-path-from-database",
-          description: "Get the content of a file using its path from the database",
+          description:
+            "Get the content of a file using its path from the database",
           parameters: z.object({
             filePath: z.string(),
           }),
           handler: async ({ filePath }, { step }) => {
             return await step?.run("getFileContent", async () => {
+              console.log("get File Content Tool Called", filePath);
               try {
                 const latestMessage = await prisma.message.findFirst({
                   where: {
-                    projectId: event.data.projectId,
-                    content: {
-                      contains: filePath, // e.g. "utils.ts"
-                    },
+                    AND: [
+                      { projectId: event.data.projectId },
+                      { role: "ASSISTANT" },
+                    ],
                   },
                   orderBy: {
                     createdAt: "desc", // latest first
@@ -209,11 +216,17 @@ export const coder = inngest.createFunction(
                     fragment: true, // include files Json
                   },
                 });
+                console.log("Latest message found", latestMessage);
 
-                if (!latestMessage?.fragment) {
+                if (
+                  !(
+                    latestMessage?.fragment?.files &&
+                    //@ts-expect-error
+                    filePath in latestMessage.fragment.files
+                  )
+                ) {
                   console.log("No file found for this path.");
                 } else {
-                  // Extract the file content from fragment.files JSON
                   const files = latestMessage.fragment.files as Record<
                     string,
                     string
@@ -223,19 +236,19 @@ export const coder = inngest.createFunction(
                   console.log("Latest file content:", fileContent);
                   return fileContent;
                 }
-                
               } catch (e) {
-                console.error(`Error occurred while reading file ${filePath}: ${e}`);
+                console.error(
+                  `Error occurred while reading file ${filePath}: ${e}`
+                );
                 return `Error occurred while reading file ${filePath}: ${e}`;
               }
             });
           },
-        })
+        }),
       ],
       lifecycle: {
         onResponse: async ({ result, network }) => {
-        console.log("FILES", network?.state.data.files);
-
+          console.log("FILES", network?.state.data.files);
 
           const lastAssistantMessageText =
             lastAssistantTextMessageContent(result);
@@ -246,46 +259,41 @@ export const coder = inngest.createFunction(
             }
           }
 
-
           return result;
         },
-
       },
-      
     });
 
     const fragmentTitleGeneration = createAgent({
       name: "fragment-title-generation",
       description: "Generates a title for the code fragment",
       model: openai({ model: "gpt-4o-mini" }),
-      system: FRAGMENT_TITLE_PROMPT
+      system: FRAGMENT_TITLE_PROMPT,
     });
 
-        const responseGenerator = createAgent({
-          name: "response-generator",
-          description: "Generates a response based on the code fragment",
-          model: openai({ model: "gpt-4o-mini" }),
-          system: RESPONSE_PROMPT,
-        });
-
-    
+    const responseGenerator = createAgent({
+      name: "response-generator",
+      description: "Generates a response based on the code fragment",
+      model: openai({ model: "gpt-4o-mini" }),
+      system: RESPONSE_PROMPT,
+    });
 
     const network = createNetwork<AgentState>({
-      name :  "coding-agent-network",
-      agents : [codeAgent],
-      maxIter : 15,
-      defaultState : state,
-      router : async ({network}) => {
+      name: "coding-agent-network",
+      agents: [codeAgent],
+      maxIter: 15,
+      defaultState: state,
+      router: async ({ network }) => {
         console.log("ROUTER", JSON.stringify(network.state.data, null, 2));
         const summary = network.state.data.summary;
-        if(summary){
+        if (summary) {
           return;
         }
         return codeAgent;
-      }
-    })
+      },
+    });
 
-    const result = await network.run(event.data.input, {state});
+    const result = await network.run(event.data.input, { state });
 
     const { output: responseOutput } = await responseGenerator.run(
       result.state.data.summary
@@ -296,18 +304,16 @@ export const coder = inngest.createFunction(
     );
 
     const generateFragmentTitle = (): string => {
-
-      if(fragmentTitleOutput[0]?.type !== "text") {
+      if (fragmentTitleOutput[0]?.type !== "text") {
         return "Fragment";
       }
 
-      if(Array.isArray(fragmentTitleOutput[0].content)){
-        return fragmentTitleOutput[0].content.map(txt => txt).join("");
-      }else{
+      if (Array.isArray(fragmentTitleOutput[0].content)) {
+        return fragmentTitleOutput[0].content.map((txt) => txt).join("");
+      } else {
         return fragmentTitleOutput[0].content || "Fragment";
       }
-
-    }
+    };
 
     const generateResponse = (): string => {
       if (responseOutput[0]?.type !== "text") {
@@ -327,20 +333,20 @@ export const coder = inngest.createFunction(
       return `https://${host}`;
     });
 
-    const isError = !result.state.data.summary
+    const isError = !result.state.data.summary;
 
     console.log("FINAL RESULT", JSON.stringify(result.state.data));
 
-    await step.run("save-result", async() => {
-
-      if(isError){
+    await step.run("save-result", async () => {
+      if (isError) {
         return await prisma.message.create({
           data: {
             projectId: event.data.projectId,
-            content: "Error occurred while processing request. Please try again",
+            content:
+              "Error occurred while processing request. Please try again",
             role: "ASSISTANT",
-            type: "ERROR"
-          }
+            type: "ERROR",
+          },
         });
       }
 
@@ -350,8 +356,8 @@ export const coder = inngest.createFunction(
           projectId: event.data.projectId,
         },
         orderBy: {
-          createdAt: "desc"
-        }
+          createdAt: "desc",
+        },
       });
 
       // Create the message with fragment
@@ -375,15 +381,15 @@ export const coder = inngest.createFunction(
       await prisma.tempFiles.deleteMany({
         where: {
           projectId: event.data.projectId,
-        }
+        },
       });
-    })
+    });
 
     console.log("SANDBOX URL", sandboxUrl);
-    return { 
-      url : sandboxUrl,
+    return {
+      url: sandboxUrl,
       title: "Fragment",
-      files : result.state.data.files,
+      files: result.state.data.files,
       summary: result.state.data.summary,
     };
   }

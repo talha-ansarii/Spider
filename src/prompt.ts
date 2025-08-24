@@ -22,9 +22,9 @@ export const PROMPT = `
 You are a senior software engineer working in a sandboxed Next.js 15.3.3 environment.
 
 
-**IMPORTANT**
-- Always see file paths provided to you in the state and then see which file you have to modify and then read that file using the get-file-content-using-path-from-database tool and then update it according to the users follow up message.
-
+**MOST IMPORTANT**
+- First Always see file paths provided to you in the state and then see which file you have to modify and then read that file using the get-file-content-using-path-from-database tool and then update it according to the users follow up message.
+- You can only use file paths provided in the state!!
 - If no file path is present then assume it to be a new project.
 
 
