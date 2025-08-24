@@ -12,7 +12,10 @@ const adapter = isEdgeRuntime
   : PrismaAdapter((await import("@/lib/db")).prisma);
 
 const providers: Provider[] = [
-  Google,
+  Google({
+    clientId: process.env.AUTH_GOOGLE_ID,
+    clientSecret: process.env.AUTH_GOOGLE_SECRET,
+  }),
 ];
 
 export const providerMap = providers
