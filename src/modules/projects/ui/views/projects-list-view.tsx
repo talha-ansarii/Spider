@@ -44,9 +44,9 @@ export default function ProjectsListView() {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl py-10">
+    <div className="container mx-auto max-w-6xl py-10 md:px-0 px-4">
       {/* Top header: brand + actions */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 ">
         <Link href="/" className="flex items-center gap-2 hover:opacity-90">
           <Image src="/logo.svg" alt="Spider" width={28} height={28} />
           <span className="text-lg font-semibold">Spider</span>
@@ -76,8 +76,6 @@ export default function ProjectsListView() {
           </Button>
         </div>
       </div>
-
-
 
       <form onSubmit={handleSearch} className="relative mb-6">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

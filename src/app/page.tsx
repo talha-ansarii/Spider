@@ -96,9 +96,9 @@ export default  function Page() {
 
 
   return (
-      <main className="relative h-dvh overflow-hidden">
+      <main className="relative min-h-dvh overflow-hidden">
       {/* Theme toggle */}
-      <div className="absolute right-4 top-4 z-20">
+      <div className="fixed right-2 top-2 z-20 sm:right-4 sm:top-4">
         <Button
           variant="ghost"
           size="icon"
@@ -117,33 +117,33 @@ export default  function Page() {
       <div className="pointer-events-none absolute inset-0 spider-web opacity-[0.18] dark:opacity-[0.22]" />
 
       <section className="relative z-10 h-full">
-        <div className="mx-auto grid h-full max-w-6xl place-items-center px-6 py-10">
-          <div className="mx-auto max-w-3xl text-center">
+        <div className="mx-auto grid h-full max-w-6xl place-items-center px-2 py-6 sm:px-6 sm:py-10">
+          <div className="mx-auto w-full max-w-3xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium text-foreground/70 glass">
               <span className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_0_3px_rgba(239,68,68,0.25)]" />
               Spider builds the web — you claim the site
             </div>
 
-            <h1 className="mt-6 text-balance text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl">
+            <h1 className="mt-6 text-balance text-3xl font-semibold tracking-tight sm:text-5xl md:text-6xl">
               Weave a beautiful website instantly
             </h1>
-            <p className="mt-4 text-pretty text-base text-foreground/70 sm:text-lg">
+            <p className="mt-4 text-pretty text-sm text-foreground/70 sm:text-base md:text-lg">
               Describe what you want and let Spider spin it into a
               production-ready site. 
             </p>
 
-            <form onSubmit={onSubmit} className="mt-10">
-              <div className="mx-auto flex max-w-2xl items-center gap-3 rounded-xl border bg-card p-2 shadow-sm ring-1 ring-transparent transition focus-within:ring-primary/40 dark:shadow-none">
+            <form onSubmit={onSubmit} className="mt-8 sm:mt-10">
+              <div className="mx-auto flex flex-col sm:flex-row max-w-2xl items-center gap-2 sm:gap-3 rounded-xl border bg-card p-2 shadow-sm ring-1 ring-transparent transition focus-within:ring-primary/40 dark:shadow-none">
                 <Input
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder="e.g. Portfolio for a creative developer"
-                  className="h-12 flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-12 w-full sm:flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <Button
                   type="submit"
                   disabled={createProject.isPending}
-                  className="h-11 rounded-lg bg-gradient-to-b from-primary to-rose-500 text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70"
+                  className="h-11 w-full sm:w-auto rounded-lg bg-gradient-to-b from-primary to-rose-500 text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70"
                 >
                   {createProject.isPending ? "Weaving…" : "Spin the Web"}
                 </Button>
@@ -159,7 +159,7 @@ export default  function Page() {
                   variant="outline"
                   size="sm"
                   disabled={createProject.isPending}
-                  className="rounded-xl border-foreground/15 bg-card/60 text-foreground/90 hover:bg-card px-3 py-1 h-8"
+                  className="rounded-xl border-foreground/15 bg-card/60 text-foreground/90 hover:bg-card px-3 py-1 h-8 min-w-[140px]"
                   onClick={() => onQuickPrompt(s)}
                   aria-label={s}
                 >
@@ -175,8 +175,8 @@ export default  function Page() {
       </section>
 
       {/* Subtle corner accents */}
-      <div className="pointer-events-none absolute -left-24 -top-24 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 h-[420px] w-[420px] rounded-full bg-rose-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-10 -top-10 h-[220px] w-[220px] sm:h-[420px] sm:w-[420px] rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-10 -right-10 h-[220px] w-[220px] sm:h-[420px] sm:w-[420px] rounded-full bg-rose-500/10 blur-3xl" />
       </main>
   );
 }
@@ -186,8 +186,8 @@ function AuthButtons() {
 
   if (status === "loading") {
     return (
-      <div className="mt-8">
-        <Button type="button" variant="outline" disabled className="h-11 w-56 rounded-lg">
+      <div className="mt-8 w-full flex justify-center">
+        <Button type="button" variant="outline" disabled className="h-11 w-full sm:w-56 rounded-lg">
           Checking session…
         </Button>
       </div>
@@ -196,11 +196,11 @@ function AuthButtons() {
 
   if (!session) {
     return (
-      <div className="mt-8">
+      <div className="mt-8 w-full flex justify-center">
         <Button
           type="button"
           variant="outline"
-          className="h-11 rounded-lg border-primary/30 hover:border-primary/50"
+          className="h-11 w-full sm:w-auto rounded-lg border-primary/30 hover:border-primary/50"
           onClick={() => signIn("google")}
         >
           Continue with Google
@@ -210,18 +210,18 @@ function AuthButtons() {
   }
 
   return (
-    <div className="mt-8 flex flex-col mb-[-50px] items-center justify-center gap-3">
+    <div className="mt-8 flex flex-col mb-[-50px] items-center justify-center gap-3 w-full">
       <span className="text-sm text-foreground/70">
         Signed in as {session.user?.name ?? session.user?.email}
       </span>
-      <div className="flex items-center gap-3">
-        <Button type="button" className="h-10 rounded-lg" asChild>
+      <div className="flex flex-col sm:flex-row items-center gap-3 w-[50%] md:w-full ">
+        <Button type="button" className="h-10 w-full sm:w-auto rounded-lg" asChild>
           <Link href="/projects">My Projects</Link>
         </Button>
         <Button
           type="button"
           variant="outline"
-          className="h-10 rounded-lg"
+          className="h-10 w-full sm:w-auto rounded-lg"
           onClick={() => signOut()}
        >
           Sign out
