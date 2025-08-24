@@ -210,11 +210,11 @@ function AuthButtons() {
   }
 
   return (
-    <div className="mt-8 flex flex-col mb-[-50px] items-center justify-center gap-3 w-full">
+    <div className="mt-8 flex  flex-col mb-[-50px] items-center justify-center gap-3 w-full">
       <span className="text-sm text-foreground/70">
         Signed in as {session.user?.name ?? session.user?.email}
       </span>
-      <div className="flex flex-col sm:flex-row items-center gap-3 w-[50%] md:w-full ">
+      <div className="flex flex-col sm:flex-row items-center gap-3 w-[50%] md:w-auto ">
         <Button type="button" className="h-10 w-full sm:w-auto rounded-lg" asChild>
           <Link href="/projects">My Projects</Link>
         </Button>

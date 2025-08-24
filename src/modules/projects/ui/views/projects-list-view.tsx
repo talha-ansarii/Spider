@@ -5,9 +5,29 @@ import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { CalendarIcon, FolderIcon, PlusIcon, SearchIcon, SunIcon, MoonIcon } from "lucide-react";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  CalendarIcon,
+  FolderIcon,
+  PlusIcon,
+  SearchIcon,
+  SunIcon,
+  MoonIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -27,7 +47,11 @@ export default function ProjectsListView() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const { data, isLoading, isFetching } = useQuery(
-    trpc.projects.getManyByUserId.queryOptions({ query, page, perPage: PER_PAGE })
+    trpc.projects.getManyByUserId.queryOptions({
+      query,
+      page,
+      perPage: PER_PAGE,
+    })
   );
 
   const items = data?.items ?? [];
@@ -56,9 +80,17 @@ export default function ProjectsListView() {
             variant="ghost"
             size="icon"
             aria-label="Toggle theme"
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            onClick={() =>
+              setTheme(resolvedTheme === "dark" ? "light" : "dark")
+            }
             className="h-9 w-9"
-            title={mounted ? (resolvedTheme === "dark" ? "Switch to light" : "Switch to dark") : "Toggle theme"}
+            title={
+              mounted
+                ? resolvedTheme === "dark"
+                  ? "Switch to light"
+                  : "Switch to dark"
+                : "Toggle theme"
+            }
           >
             {mounted ? (
               resolvedTheme === "dark" ? (
@@ -94,13 +126,15 @@ export default function ProjectsListView() {
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <FolderIcon className="h-10 w-10 text-muted-foreground mb-3" />
-          <p className="text-muted-foreground">No projects found{query ? ` for "${query}"` : ""}.</p>
+          <p className="text-muted-foreground">
+            No projects found{query ? ` for "${query}"` : ""}.
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((p) => (
             <Link key={p.id} href={`/projects/${p.id}`} className="group">
-              <Card className={cn("transition-colors hover:border-primary/50") }>
+              <Card className={cn("transition-colors hover:border-primary/50")}>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-base truncate">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -109,12 +143,17 @@ export default function ProjectsListView() {
                     <span className="truncate">{p.name}</span>
                   </CardTitle>
                   <CardDescription className="flex items-center gap-1 text-xs">
-                    <CalendarIcon className="h-3 w-3" /> Updated {format(new Date(p.updatedAt), "MMM dd, yyyy")}
+                    <CalendarIcon className="h-3 w-3" /> Updated{" "}
+                    {format(new Date(p.updatedAt), "MMM dd, yyyy")}
                   </CardDescription>
                 </CardHeader>
 
                 <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="px-0 group-hover:text-primary">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="px-0 group-hover:text-primary"
+                  >
                     Open project
                   </Button>
                 </CardFooter>
@@ -137,24 +176,27 @@ export default function ProjectsListView() {
                 className={cn({ "pointer-events-none opacity-50": page <= 1 })}
               />
             </PaginationItem>
-            {Array.from({ length: totalPages }).slice(0, 5).map((_, i) => {
-              const pageNum = i + Math.max(1, Math.min(page - 2, totalPages - 4));
-              if (pageNum > totalPages) return null;
-              return (
-                <PaginationItem key={pageNum}>
-                  <PaginationLink
-                    href="#"
-                    isActive={pageNum === page}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setPage(pageNum);
-                    }}
-                  >
-                    {pageNum}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })}
+            {Array.from({ length: totalPages })
+              .slice(0, 5)
+              .map((_, i) => {
+                const pageNum =
+                  i + Math.max(1, Math.min(page - 2, totalPages - 4));
+                if (pageNum > totalPages) return null;
+                return (
+                  <PaginationItem key={pageNum}>
+                    <PaginationLink
+                      href="#"
+                      isActive={pageNum === page}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPage(pageNum);
+                      }}
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
             <PaginationItem>
               <PaginationNext
                 href="#"
@@ -162,15 +204,19 @@ export default function ProjectsListView() {
                   e.preventDefault();
                   setPage((p) => Math.min(totalPages, p + 1));
                 }}
-                className={cn({ "pointer-events-none opacity-50": page >= totalPages })}
+                className={cn({
+                  "pointer-events-none opacity-50": page >= totalPages,
+                })}
               />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
       </div>
 
-      {(isFetching && !isLoading) && (
-        <div className="text-center text-xs text-muted-foreground mt-2">Updating…</div>
+      {isFetching && !isLoading && (
+        <div className="text-center text-xs text-muted-foreground mt-2">
+          Updating…
+        </div>
       )}
     </div>
   );
