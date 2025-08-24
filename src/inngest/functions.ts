@@ -24,6 +24,7 @@ export const coder = inngest.createFunction(
     
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("spider-test-2");
+      await sandbox.setTimeout(60_000 * 10 * 3);
       return sandbox.sandboxId;
     });
 
@@ -41,6 +42,7 @@ export const coder = inngest.createFunction(
         orderBy: {
           createdAt: "asc",
         },
+        take: 5, // get last 5 messages
       });
 
       for (const i in messages) {
@@ -48,7 +50,7 @@ export const coder = inngest.createFunction(
         formattedMessages.push({
           type: "text",
           role: message.role === "ASSISTANT" ? "assistant" : "user",
-          content: `${i+1}. ${message.content}`,
+          content: message.content,
         });
 
         //extracting file paths only
@@ -57,7 +59,7 @@ export const coder = inngest.createFunction(
         }
       }
 
-      return { messages: formattedMessages, files: formattedFilesPath };
+      return { messages: formattedMessages.reverse(), files: formattedFilesPath };
     });
 
     console.log("PREVIOUS FILES", previousMessagesAndFiles.files);

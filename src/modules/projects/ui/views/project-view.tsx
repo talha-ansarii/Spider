@@ -20,6 +20,7 @@ import {  CodeIcon, CrownIcon, EyeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FileExplorer } from "@/components/file-explorer";
+import { ErrorBoundary } from "react-error-boundary";
 
 export const ProjectView = ({ projectId }: Props   ) => {
   const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
@@ -33,14 +34,16 @@ export const ProjectView = ({ projectId }: Props   ) => {
           minSize={20}
           className="flex flex-col min-h-0"
         >
-          <Suspense fallback={<div>Loading messages...</div>}>
-            <ProjectHeader projectId={projectId} />
-            <MessagesContainer
-              projectId={projectId}
-              activeFragment={activeFragment}
-              setActiveFragment={setActiveFragment}
-            />
-          </Suspense>
+          <ErrorBoundary fallback={<div>Something went wrong</div>}>
+            <Suspense fallback={<div>Loading messages...</div>}>
+              <ProjectHeader projectId={projectId} />
+              <MessagesContainer
+                projectId={projectId}
+                activeFragment={activeFragment}
+                setActiveFragment={setActiveFragment}
+              />
+            </Suspense>
+          </ErrorBoundary>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={65} minSize={50}>
