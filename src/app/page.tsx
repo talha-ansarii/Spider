@@ -8,22 +8,27 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
-import { signIn } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 
 
 export default  function Page() {
+  const { data: session } = useSession();
 
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
 
- const [value, setValue] = useState("");
+ const [value, setValue] = useState(localStorage.getItem("value") || "");
  const [mounted, setMounted] = useState(false);
 
  useEffect(() => {
    setMounted(true);
  }, []);
 
+
+
  const trpc = useTRPC();
+
 
  const createProject = useMutation(trpc.projects.create.mutationOptions({
    onError : (error) => {
@@ -34,6 +39,33 @@ export default  function Page() {
    }
  }));
 
+
+  useEffect(() => {
+    const value = localStorage.getItem("value");
+    localStorage.removeItem("value");
+    if (value) {
+      createProject.mutate({ value });
+    }
+  }, [createProject]);
+
+  // Quick-start suggestions
+  const suggestions = [
+    "Build an admin dashboard",
+    "Build a kanban board",
+    "Build a blog page",
+    "Build a landing page"
+  ];
+
+  function onQuickPrompt(prompt: string) {
+    setValue(prompt);
+    if (session?.user) {
+      setValue(prompt);
+    } else {
+      localStorage.setItem("value", prompt);
+      signIn();
+    }
+  }
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!value.trim()) {
@@ -42,14 +74,19 @@ export default  function Page() {
       });
       return;
     }
-    createProject.mutate({ value });
+    if(session?.user) {
+      createProject.mutate({ value });
+    }else{
+      localStorage.setItem("value", value);
+      signIn();
+    }
   }
 
 
 
 
   return (
-    <main className="relative h-dvh overflow-hidden">
+      <main className="relative h-dvh overflow-hidden">
       {/* Theme toggle */}
       <div className="absolute right-4 top-4 z-20">
         <Button
@@ -82,7 +119,7 @@ export default  function Page() {
             </h1>
             <p className="mt-4 text-pretty text-base text-foreground/70 sm:text-lg">
               Describe what you want and let Spider spin it into a
-              production-ready site. Cute in light. Lethal in dark.
+              production-ready site. 
             </p>
 
             <form onSubmit={onSubmit} className="mt-10">
@@ -103,12 +140,26 @@ export default  function Page() {
               </div>
             </form>
 
-            <div className="mt-6 text-xs text-foreground/60">
-              By continuing you agree to an automated project setup. You can
-              refine later.
+            {/* Predefined prompt chips */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+              {suggestions.map((s) => (
+                <Button
+                  key={s}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={createProject.isPending}
+                  className="rounded-xl border-foreground/15 bg-card/60 text-foreground/90 hover:bg-card px-3 py-1 h-8"
+                  onClick={() => onQuickPrompt(s)}
+                  aria-label={s}
+                >
+                  {s}
+                </Button>
+              ))}
             </div>
 
-            <button onClick={() => signIn()}>Sign In</button>
+
+            <AuthButtons />
           </div>
         </div>
       </section>
@@ -116,6 +167,56 @@ export default  function Page() {
       {/* Subtle corner accents */}
       <div className="pointer-events-none absolute -left-24 -top-24 h-[420px] w-[420px] rounded-full bg-primary/10 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-[420px] w-[420px] rounded-full bg-rose-500/10 blur-3xl" />
-    </main>
+      </main>
+  );
+}
+
+function AuthButtons() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return (
+      <div className="mt-8">
+        <Button type="button" variant="outline" disabled className="h-11 w-56 rounded-lg">
+          Checking session…
+        </Button>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="mt-8">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 rounded-lg border-primary/30 hover:border-primary/50"
+          onClick={() => signIn("google")}
+        >
+          Continue with Google
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 flex flex-col mb-[-50px] items-center justify-center gap-3">
+      <span className="text-sm text-foreground/70">
+        Signed in as {session.user?.name ?? session.user?.email}
+      </span>
+      <div className="flex items-center gap-3">
+        <Button type="button" className="h-10 rounded-lg" asChild>
+          <Link href="/projects">My Projects</Link>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 rounded-lg"
+          onClick={() => signOut()}
+       >
+          Sign out
+        </Button>
+      </div>
+    </div>
   );
 }

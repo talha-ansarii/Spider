@@ -30,7 +30,7 @@ export const ProjectHeader = ({ projectId }: Props) => {
   );
 
   const handleBack = () => {
-    router.push('/');
+    router.push('/projects');
   };
 
   return (

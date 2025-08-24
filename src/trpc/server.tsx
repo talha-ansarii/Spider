@@ -8,7 +8,8 @@ import { appRouter } from "./routers/_app";
 //            will return the same client during the same request.
 export const getQueryClient = cache(makeQueryClient);
 export const trpc = createTRPCOptionsProxy({
-  ctx: createTRPCContext,
+  // Pass a zero-arg factory; our context handles default headers internally
+  ctx: () => createTRPCContext(),
   router: appRouter,
   queryClient: getQueryClient,
 });

@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 const SIGNIN_ERROR_URL = "/error";
 
 export default async function SignInPage(props: {
-  searchParams: { callbackUrl: string | undefined };
+  // In this project, searchParams is modeled as a Promise in PageProps
+  // so we await it to get the actual values.
+  searchParams: Promise<{ callbackUrl?: string }>;
 }) {
+  const sp = await props.searchParams;
   return (
     <main className="relative h-dvh overflow-hidden">
       {/* Background effects */}
@@ -30,11 +33,11 @@ export default async function SignInPage(props: {
 
             <div className="mt-6">
               <form
-                action={async () => {
+        action={async () => {
                   "use server";
                   try {
                     await signIn("google", {
-                      redirectTo: props.searchParams?.callbackUrl ?? "/",
+          redirectTo: sp?.callbackUrl ?? "/",
                     });
                   } catch (error) {
                     if (error instanceof AuthError) {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,18 +27,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <TRPCReactProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ThemeProvider>
-            <Toaster/>
-            {children}
-          </ThemeProvider>
-        </body>
-      </html>
-    </TRPCReactProvider>
-    
+    <SessionProvider>
+      <TRPCReactProvider>
+        <html lang="en" suppressHydrationWarning>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <ThemeProvider>
+              <Toaster />
+              {children}
+            </ThemeProvider>
+          </body>
+        </html>
+      </TRPCReactProvider>
+    </SessionProvider>
   );
 }
