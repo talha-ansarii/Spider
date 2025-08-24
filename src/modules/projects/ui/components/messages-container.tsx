@@ -25,12 +25,13 @@ export const MessagesContainer = ({ projectId, activeFragment, setActiveFragment
    );
 
    useEffect(() => {
-      const lastAssistantMessage = messages.findLast(m => m.role === "ASSISTANT");
+      const lastAssistantMessage = messages.findLast((m) => m.role === "ASSISTANT");
 
-      if (lastAssistantMessage && lastAssistantMessage.fragment) {
+      // Only auto-select the latest assistant fragment if the user hasn't picked one
+      if (!activeFragment && lastAssistantMessage?.fragment) {
          setActiveFragment(lastAssistantMessage.fragment);
       }
-   }, [messages, setActiveFragment]);
+   }, [messages, activeFragment, setActiveFragment]);
 
    useEffect(() => {
       bottomRef.current?.scrollIntoView();
