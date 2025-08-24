@@ -3,6 +3,11 @@ import { type NextRequest } from "next/server";
 import { createTRPCContext } from "@/trpc/init";
 import { appRouter } from "@/trpc/routers/_app";
 
+// Ensure this route runs on the Node.js runtime (Prisma isn't compatible with Edge)
+export const runtime = "nodejs";
+// Avoid static optimization attempts during build when collecting page data
+export const dynamic = "force-dynamic";
+
 const createContext = async (req: NextRequest) => {
   return createTRPCContext({
     headers: req.headers,
