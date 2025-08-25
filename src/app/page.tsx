@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import { Github, Linkedin, Globe } from "lucide-react";
 
 
 export default  function Page() {
@@ -92,13 +93,34 @@ export default  function Page() {
     }
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      const form = e.currentTarget.closest('form');
+      if (form) {
+        form.requestSubmit();
+      }
+    }
+    // Allow normal Enter key to create new lines (default behavior)
+  }
+
+  function handleTextareaChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setValue(e.target.value);
+    
+    // Auto-resize textarea
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  }
+
 
 
 
   return (
       <main className="relative min-h-dvh overflow-hidden pt-[50px]">
-      {/* Theme toggle */}
-      <div className="fixed right-2 top-2 z-20 sm:right-4 sm:top-4">
+      {/* Theme toggle and Social Links */}
+      <div className="fixed right-2 top-2 z-20 sm:right-4 sm:top-4 flex items-center gap-2">
+        <SocialLinks />
         <Button
           variant="ghost"
           size="icon"
@@ -116,8 +138,8 @@ export default  function Page() {
       <div className="pointer-events-none absolute inset-0 hero-glow" />
       <div className="pointer-events-none absolute inset-0 spider-web opacity-[0.18] dark:opacity-[0.22]" />
 
-      <section className="relative z-10 h-full">
-        <div className="mx-auto grid h-full max-w-6xl place-items-center px-2 py-6 sm:px-6 sm:py-10">
+      <section className="relative z-10 flex min-h-[calc(100vh-50px)] items-center justify-center">
+        <div className="mx-auto w-full max-w-6xl px-2 py-6 sm:px-6 sm:py-10">
           <div className="mx-auto w-full max-w-3xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium text-foreground/70 glass">
               <span className="inline-block h-2 w-2 rounded-full bg-primary shadow-[0_0_0_3px_rgba(239,68,68,0.25)]" />
@@ -134,16 +156,33 @@ export default  function Page() {
 
             <form onSubmit={onSubmit} className="mt-8 sm:mt-10">
               <div className="mx-auto flex flex-col sm:flex-row max-w-2xl items-center gap-2 sm:gap-3 rounded-xl border bg-card p-2 shadow-sm ring-1 ring-transparent transition focus-within:ring-primary/40 dark:shadow-none">
-                <Input
+              <div className="flex flex-col gap-2 w-full">
+                <Textarea
                   value={value}
-                  onChange={(e) => setValue(e.target.value)}
+                  onChange={handleTextareaChange}
+                  onKeyDown={handleKeyDown}
                   placeholder="e.g. Portfolio for a creative developer"
-                  className="h-12 w-full sm:flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="min-h-12 max-h-[120px] w-full sm:flex-1 border-0 bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 overflow-y-auto"
+                  rows={1}
                 />
+                <div className="flex gap-x-2 items-end justify-between w-full pt-2">
+           <div className="text-[10px] text-muted-foreground font-mono">
+             <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center rounded border bg-muted px-1.5 font-sans text-xs font-medium opacity-100">
+               <span>&#8984;</span>Enter
+             </kbd>
+             &nbsp; to submit
+           </div>
+
+         </div>
+
+              </div>
+                <div>
+                  
+                </div>
                 <Button
                   type="submit"
                   disabled={createProject.isPending}
-                  className="h-11 w-full sm:w-auto rounded-lg bg-gradient-to-b from-primary to-rose-500 text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70"
+                  className="h-11 w-full sm:w-auto rounded-lg bg-gradient-to-b from-primary to-rose-500 text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70 mb-8"
                 >
                   {createProject.isPending ? "Weaving…" : "Spin the Web"}
                 </Button>
@@ -227,6 +266,49 @@ function AuthButtons() {
           Sign out
         </Button>
       </div>
+    </div>
+  );
+}
+
+function SocialLinks() {
+  const socialLinks = [
+    {
+      name: "GitHub",
+      href: "https://github.com/talha-ansarii", // Replace with your GitHub URL
+      icon: Github,
+      className: "hover:text-gray-900 dark:hover:text-gray-100"
+    },
+    {
+      name: "LinkedIn", 
+      href: "https://linkedin.com/in/talha-ansarii", // Replace with your LinkedIn URL
+      icon: Linkedin,
+      className: "hover:text-blue-600 dark:hover:text-blue-400"
+    },
+    {
+      name: "Portfolio",
+      href: "https://www.talhaansari.in", // Replace with your portfolio URL
+      icon: Globe,
+      className: "hover:text-green-600 dark:hover:text-green-400"
+    }
+  ];
+
+  return (
+    <div className="flex items-center gap-1">
+      {socialLinks.map((link) => {
+        const IconComponent = link.icon;
+        return (
+          <Link
+            key={link.name}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center justify-center rounded-full border border-foreground/20 bg-card/60 p-2 text-foreground/60 transition-all duration-200 hover:border-foreground/40 hover:bg-card hover:scale-105 ${link.className}`}
+            aria-label={`Visit my ${link.name}`}
+          >
+            <IconComponent size={16} />
+          </Link>
+        );
+      })}
     </div>
   );
 }
