@@ -96,7 +96,7 @@ export default  function Page() {
 
 
   return (
-      <main className="relative min-h-dvh overflow-hidden">
+      <main className="relative min-h-dvh overflow-hidden pt-[50px]">
       {/* Theme toggle */}
       <div className="fixed right-2 top-2 z-20 sm:right-4 sm:top-4">
         <Button
@@ -210,7 +210,7 @@ function AuthButtons() {
   }
 
   return (
-    <div className="mt-8 flex  flex-col mb-[-50px] items-center justify-center gap-3 w-full">
+    <div className="mt-8 flex  flex-col items-center justify-center gap-3 w-full">
       <span className="text-sm text-foreground/70">
         Signed in as {session.user?.name ?? session.user?.email}
       </span>
