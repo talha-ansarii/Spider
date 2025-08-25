@@ -184,7 +184,7 @@ export default  function Page() {
                 <Button
                   type="submit"
                   disabled={createProject.isPending}
-                  className="h-11 w-full sm:w-auto rounded-lg bg-gradient-to-b from-primary to-rose-500 text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70 mb-8"
+                  className="h-11 w-full sm:w-auto rounded-lg bg-gradient-to-b from-primary to-rose-500 text-primary-foreground shadow-sm transition hover:opacity-95 disabled:opacity-70 md:mb-8"
                 >
                   {createProject.isPending ? "Weaving…" : "Spin the Web"}
                 </Button>
