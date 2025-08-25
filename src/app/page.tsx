@@ -120,7 +120,9 @@ export default  function Page() {
       <main className="relative min-h-dvh overflow-hidden pt-[50px]">
       {/* Theme toggle and Social Links */}
       <div className="fixed right-2 top-2 z-20 sm:right-4 sm:top-4 flex items-center gap-2">
-        <SocialLinks />
+        <div className="hidden sm:flex">
+          <SocialLinks />
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -209,6 +211,11 @@ export default  function Page() {
 
 
             <AuthButtons />
+            
+            {/* Mobile Social Links */}
+            <div className="flex sm:hidden mt-8 justify-center">
+              <MobileSocialLinks />
+            </div>
           </div>
         </div>
       </section>
@@ -309,6 +316,55 @@ function SocialLinks() {
           </Link>
         );
       })}
+    </div>
+  );
+}
+
+function MobileSocialLinks() {
+  const socialLinks = [
+    {
+      name: "GitHub",
+      href: "https://github.com/talha-ansarii",
+      icon: Github,
+      className: "hover:text-gray-900 dark:hover:text-gray-100"
+    },
+    {
+      name: "LinkedIn", 
+      href: "https://linkedin.com/in/talha-ansarii",
+      icon: Linkedin,
+      className: "hover:text-blue-600 dark:hover:text-blue-400"
+    },
+    {
+      name: "Portfolio",
+      href: "https://www.talhaansari.in",
+      icon: Globe,
+      className: "hover:text-green-600 dark:hover:text-green-400"
+    }
+  ];
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <span className="text-sm text-foreground/50">Connect with me</span>
+      <div className="flex items-center gap-6">
+        {socialLinks.map((link) => {
+          const IconComponent = link.icon;
+          return (
+            <Link
+              key={link.name}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex flex-col items-center gap-2 text-foreground/60 transition-all duration-200 hover:scale-110 ${link.className}`}
+              aria-label={`Visit my ${link.name}`}
+            >
+              <div className="flex items-center justify-center rounded-full border border-foreground/20 bg-card/60 p-3 transition-all duration-200 hover:border-foreground/40 hover:bg-card">
+                <IconComponent size={20} />
+              </div>
+              <span className="text-xs font-medium">{link.name}</span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
